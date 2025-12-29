@@ -4,7 +4,9 @@ import Quickshell
 PanelWindow {
     id: floatingMusicButton
     color: "transparent"
-    mask: buttonRect
+    mask: Region {
+        item: buttonRect
+    }
     aboveWindows: false
 
     anchors {

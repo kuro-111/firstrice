@@ -8,6 +8,10 @@ import Quickshell.Services.Mpris
 PopupWindow {
     id: musicPopup
 
+    implicitWidth: Screen.width
+    implicitHeight: Screen.height
+    color: "transparent"
+
     function getActivePlayer() {
         for (var i = 0; i < Mpris.players.values.length; i++) {
             if (Mpris.players.values[i].playbackState === MprisPlaybackState.Playing) {
@@ -22,32 +26,11 @@ PopupWindow {
     // Bind the property to the function
     property var activePlayer: getActivePlayer()
 
-    // 2. DEBUGGING: Check raw data on load
-    Component.onCompleted: {
-        console.log("Debug: Checking Players...");
-        console.log(Mpris.players.values.length);
-
-        if (Mpris.players.values.length === 0) {
-            console.log("Debug: Mpris.players list is EMPTY.");
-            console.log("Debug: Please run 'playerctl -l' in your terminal to verify system visibility.");
-        } else {
-            console.log("Length" + Mpris.players.values.length);
-            for (var i = 0; i < Mpris.players.values.length; i++) {
-                // Print specific ID of each player found
-                console.log("Debug: Found player -> " + Mpris.players.values[i].identity);
-            }
-        }
-    }
-
-    width: Screen.width
-    height: Screen.height
-
-    color: "transparent"
-
     MouseArea {
         anchors.fill: parent
         onClicked: {
-            musicPopup.visible = false;
+            // Instead of closing immediately, start the exit animation
+            exitAnimation.start();
         }
     }
 
@@ -72,6 +55,44 @@ PopupWindow {
             hoverEnabled: true // Optional: allows hover effects
             onClicked: {
                 // Do nothing, just consume the event so it doesn't pass to the background
+            }
+        }
+
+        transformOrigin: Item.BottomRight
+        scale: 0 // Start hidden (scale 0)
+
+        Connections {
+            target: musicPopup
+            function onVisibleChanged() {
+                if (musicPopup.visible) {
+                    card.scale = 0; // Reset scale
+                    enterAnimation.start();
+                }
+            }
+        }
+
+        NumberAnimation {
+            id: enterAnimation
+            target: card
+            property: "scale"
+            from: 0.0
+            to: 1.0
+            duration: 350
+            easing.type: Easing.OutBack // The "Pop" effect
+            easing.overshoot: 1.2
+        }
+
+        NumberAnimation {
+            id: exitAnimation
+            target: card
+            property: "scale"
+            from: 1.0
+            to: 0.0
+            duration: 300
+            easing.type: Easing.InBack // The "Anticipation" pull effect
+
+            onFinished: {
+                musicPopup.visible = false;
             }
         }
 
@@ -115,12 +136,36 @@ PopupWindow {
                     color: "#45475a"
                     radius: 2
 
+                    Timer {
+                        id: progressTimer
+                        interval: 200
+                        running: activePlayer && activePlayer.playbackState === MprisPlaybackState.Playing
+                        repeat: true
+                        // We use this property to create a binding dependency
+                        property int tick: 0
+                        onTriggered: tick++
+                    }
+
                     Rectangle {
                         height: parent.height
-                        // Calculate width percentage based on song position
-                        width: (activePlayer && activePlayer.length > 0) ? (parent.width * (activePlayer.position / activePlayer.length)) : 0
                         color: "#cba6f7"
                         radius: 2
+
+                        width: {
+                            if (!activePlayer || activePlayer.lenght <= 0)
+                                return 0;
+
+                            progressTimer.tick;
+
+                            return parent.width * (activePlayer.position / activePlayer.length);
+                        }
+
+                        Behavior on width {
+                            NumberAnimation {
+                                duration: 200
+                                easing.type: Easing.Linear
+                            }
+                        }
                     }
                 }
 
