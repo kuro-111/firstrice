@@ -124,26 +124,82 @@ PopupWindow {
                     }
                 }
 
-                Button {
-                    text: (activePlayer && activePlayer.playbackState === MprisPlaybackState.Playing) ? "⏸" : "▶"
+                RowLayout {
                     Layout.alignment: Qt.AlignRight
+                    spacing: 8
 
-                    onClicked: {
-                        if (activePlayer) {
-                            activePlayer.togglePlaying();
+                    Button {
+                        Layout.preferredWidth: 30
+                        Layout.preferredHeight: 30
+
+                        text: "⏮"
+
+                        onClicked: {
+                            if (activePlayer && activePlayer.canGoPrevious) {
+                                activePlayer.previous();
+                            }
+                        }
+                        // Basic styling for the button
+                        background: Rectangle {
+                            color: parent.down ? "#45475a" : "#313244"
+                            radius: 5
+                        }
+                        contentItem: Text {
+                            text: parent.text
+                            color: "white"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
                         }
                     }
 
-                    // Basic styling for the button
-                    background: Rectangle {
-                        color: parent.down ? "#45475a" : "#313244"
-                        radius: 5
+                    Button {
+                        text: (activePlayer && activePlayer.playbackState === MprisPlaybackState.Playing) ? "⏸" : "▶"
+
+                        Layout.preferredWidth: 30
+                        Layout.preferredHeight: 30
+
+                        onClicked: {
+                            if (activePlayer) {
+                                activePlayer.togglePlaying();
+                            }
+                        }
+
+                        // Basic styling for the button
+                        background: Rectangle {
+                            color: parent.down ? "#45475a" : "#313244"
+                            radius: 5
+                        }
+                        contentItem: Text {
+                            text: parent.text
+                            color: "white"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
                     }
-                    contentItem: Text {
-                        text: parent.text
-                        color: "white"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
+
+                    Button {
+                        text: "⏭"
+
+                        Layout.preferredWidth: 30
+                        Layout.preferredHeight: 30
+
+                        onClicked: {
+                            if (activePlayer && activePlayer.canGoNext) {
+                                activePlayer.next();
+                            }
+                        }
+
+                        // Basic styling for the button
+                        background: Rectangle {
+                            color: parent.down ? "#45475a" : "#313244"
+                            radius: 5
+                        }
+                        contentItem: Text {
+                            text: parent.text
+                            color: "white"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
                     }
                 }
             }
