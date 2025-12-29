@@ -1,5 +1,7 @@
 import QtQuick
 import Quickshell
+import Quickshell.Widgets
+import QtQuick.Controls
 
 PanelWindow {
     mask: Region {}
@@ -29,7 +31,7 @@ PanelWindow {
         Image {
             id: bingus
 
-            source: Qt.resolvedUrl("./images/bing.png")
+            source: Qt.resolvedUrl("../assets/bing.png")
             height: 50
             width: 50
             y: jumpContainer.groundLevel
