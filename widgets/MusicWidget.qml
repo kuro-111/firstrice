@@ -4,6 +4,7 @@ import QtQuick.Controls
 import QtQuick.Window
 import Quickshell
 import Quickshell.Services.Mpris
+import qs.components.controls
 
 PopupWindow {
     id: musicPopup
@@ -25,6 +26,10 @@ PopupWindow {
 
     // Bind the property to the function
     property var activePlayer: getActivePlayer()
+    property real playerProgress: {
+        const active = activePlayer;
+        return active?.length ? active.position / active.length : 0;
+    }
 
     MouseArea {
         anchors.fill: parent
@@ -130,41 +135,40 @@ PopupWindow {
                     Layout.fillWidth: true
                 }
 
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 4
-                    color: "#45475a"
-                    radius: 2
+                StyledSlider {
+                    id: slider
 
-                    Timer {
-                        id: progressTimer
-                        interval: 200
-                        running: activePlayer && activePlayer.playbackState === MprisPlaybackState.Playing
-                        repeat: true
-                        // We use this property to create a binding dependency
-                        property int tick: 0
-                        onTriggered: tick++
+                    enabled: !!activePlayer
+                    implicitWidth: parent.width
+                    implicitHeight: 10
+
+                    onMoved: {
+                        const active = activePlayer;
+                        if (active?.canSeek && active?.positionSupported)
+                            active.position = value * active.length;
                     }
 
-                    Rectangle {
-                        height: parent.height
-                        color: "#cba6f7"
-                        radius: 2
+                    Binding {
+                        target: slider
+                        property: "value"
+                        value: musicPopup.playerProgress
+                        when: !slider.pressed
+                    }
 
-                        width: {
-                            if (!activePlayer || activePlayer.lenght <= 0)
-                                return 0;
+                    CustomMouseArea {
+                        anchors.fill: parent
+                        acceptedButtons: Qt.NoButton
 
-                            progressTimer.tick;
+                        function onWheel(event: WheelEvent) {
+                            const active = activePlayer;
+                            if (!active?.canSeek || !active?.positionSupported)
+                                return;
 
-                            return parent.width * (activePlayer.position / activePlayer.length);
-                        }
-
-                        Behavior on width {
-                            NumberAnimation {
-                                duration: 200
-                                easing.type: Easing.Linear
-                            }
+                            event.accepted = true;
+                            const delta = event.angleDelta.y > 0 ? 10 : -10;    // Time 10 seconds
+                            Qt.callLater(() => {
+                                active.position = Math.max(0, Math.min(active.length, active.position + delta));
+                            });
                         }
                     }
                 }
